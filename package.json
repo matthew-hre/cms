@@ -1,0 +1,24 @@
+{
+  "name": "@matthew-hre/cms",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --dts",
+    "dev": "tsup src/index.ts --dts --watch"
+  },
+  "author": "Matthew Hrehirchuk <matthew_hre@outlook.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "tsup": "^8.5.0",
+    "typescript": "^5.9.2",
+    "zod": "^4.0.15"
+  }
+}
