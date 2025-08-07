@@ -2,7 +2,7 @@
   "name": "@matthew-hre/cms",
   "version": "0.1.0",
   "type": "module",
-  "main": "./dist/index.js",
+  "main": "./dist/index.cjs",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
@@ -11,13 +11,16 @@
     }
   },
   "scripts": {
-    "build": "tsup src/index.ts --dts",
-    "dev": "tsup src/index.ts --dts --watch"
+    "build": "tsup src/index.ts --format esm,cjs --dts",
+    "dev": "tsup src/index.ts --format esm,cjs --dts --watch",
+    "test": "tsx src/example.ts"
   },
   "author": "Matthew Hrehirchuk <matthew_hre@outlook.com>",
   "license": "MIT",
   "devDependencies": {
+    "@types/node": "^24.2.0",
     "tsup": "^8.5.0",
+    "tsx": "^4.20.3",
     "typescript": "^5.9.2",
     "zod": "^4.0.15"
   }
