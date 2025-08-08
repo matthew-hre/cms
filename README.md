@@ -9,81 +9,74 @@ potential to possibly grow into something larger later.
 
 ## Goals
 
-- Store all content in the same repo as the site (`src/content`)
+- Store all content in the same repo as the site
 - Use GitHub login to control access
 - Read/write content directly to the main branch
 - Manage both static (profile) and dynamic (projects) content
 - Clean, schema-based config (`cms.config.ts`)
-- No NextAuth, no database, no hosting headaches
+- No NextAuth, no database, no deployment nightmares
+- Type safe all the way through
 
-## Content Model
+## Features (Completed Tasks)
 
-### Static: `profile.json`
+### Core Library
 
-Single JSON file, fields:
-
-- `name`: string
-- `username`: string
-- `description`: rich text
-- `job`: rich text
-- `location`: rich text
-- `school`: rich text
-
-### Dynamic: `projects/*.json`
-
-Each project has:
-
-- `name`: string
-- `image`: optional string
-- `fallbackColor`: string
-- `description`: string
-- `tags`: optional array of strings
-- `url`: optional string
-- `github`: optional string
+- [x] `defineCMSConfig()` helper
+- [x] Validate and normalize schema with Zod
+- [x] Infer field types (`string`, `string?`, `string[]`, nested objects)
+- [x] Type-safe content API for reading
+- [x] Local file adapter for JSON content
+- [x] Package build and export setup
 
 ## TODO
 
-### Config
-
-- [ ] `defineCms(config)` helper
-- [ ] Validate and normalize schema
-- [ ] Infer basic field types (`string`, `text`, `string[]`, etc)
-
 ### GitHub Integration
 
-- [ ] GitHub OAuth login
-- [ ] Get user token
-- [ ] Verify access to repo
-- [ ] Read file(s) from repo
-- [ ] Write file(s) to repo with commit
+- [ ] GitHub API adapter class
+- [ ] GitHub OAuth login flow
+- [ ] Get user token and store securely
+- [ ] Verify user access to configured repo
+- [ ] Read file(s) from GitHub repo via API
+- [ ] Write/commit file(s) to GitHub repo
+- [ ] Handle rate limiting and error cases
+
+### Content Management API
+
+- [ ] Write operations for static content
+- [ ] Write operations for collections (create, update, delete)
+- [ ] Content validation before writing
+- [ ] Atomic operations and conflict resolution
+- [ ] Content history/versioning support
 
 ### Admin UI
 
-- [ ] Form to edit `profile.json`
-- [ ] List of existing `projects/*.json`
-- [ ] Form to edit/add projects
-- [ ] Delete project (optional for MVP)
+- [ ] React components for content editing
+- [ ] Dynamic form generation from schema
+- [ ] Form to edit static content (e.g., `profile.json`)
+- [ ] List view for collections (e.g., `projects/*.json`)
+- [ ] Form to edit/add collection items
+- [ ] Delete collection items
+- [ ] File upload handling for basic assets
+- [ ] Real-time preview of changes
 
-### API
+### Next.js Integration
 
-- [ ] `/api/cms/auth/login`
-- [ ] `/api/cms/auth/callback`
-- [ ] `/api/cms/content` (get/save content)
+- [ ] `/api/cms/auth/login` endpoint
+- [ ] `/api/cms/auth/callback` endpoint
+- [ ] `/api/cms/content` endpoint (get/save content)
+- [ ] Middleware for auth protection
+- [ ] Session management
+- [ ] CSRF protection
 
-### Dev/Test
+## Out of Scope (for now)
 
-- [ ] Test `getStaticContent()` for profile
-- [ ] Test `getDynamicContent()` for projects
-- [ ] Manual test on deployed site (Vercel)
-
-## Out of Scope
-
-- Image uploads
-- Rich text editing
-- Markdown/MDX support
-- Live preview
+- Rich text editing (Markdown/MDX)
+- Image processing and optimization
+- Live preview during editing
 - PR-based editing or branch isolation
+- Multi-user collaboration features
+- Content scheduling/publishing workflows
 
-## 📝 License
+## 📄 License
 
 MIT © Matthew Hrehirchuk
