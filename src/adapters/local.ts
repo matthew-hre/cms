@@ -1,88 +1,147 @@
 import path from 'node:path'
 import fs from 'node:fs/promises'
+import crypto from 'node:crypto'
 import { CMSConfig } from '../config/schema'
+import { Adapter } from './types'
 
-export class LocalContentAdapter {
+export class LocalContentAdapter implements Adapter {
     constructor(private config: CMSConfig) { }
 
-    async getStatic<T = unknown>(key: string): Promise<T> {
-        const entry = this.config.static[key]
-
-        if (!entry) {
-            throw new Error(`[cms] Static entry "${key}" not found in config.`)
-        }
-
-        const filename = entry.filename
-        if (!filename) {
-            throw new Error(`[cms] Static entry "${key}" is missing a filename.`)
-        }
-
-        const fullPath = path.join(
+    private getStaticPath(filename: string): string {
+        return path.join(
             this.config.contentPath,
             this.config.staticDir,
             filename
         )
-
-        let raw: string
-        try {
-            raw = await fs.readFile(fullPath, 'utf-8')
-        } catch (err: any) {
-            if (err.code === 'ENOENT') {
-                throw new Error(`[cms] Static file not found: ${fullPath}`)
-            }
-            throw new Error(`[cms] Failed to read "${key}": ${err.message}`)
-        }
-
-        try {
-            return JSON.parse(raw) as T
-        } catch (err: any) {
-            throw new Error(`[cms] Failed to parse "${key}" at ${fullPath}: ${err.message}`)
-        }
     }
 
-    async getAll<T = unknown>(collection: string): Promise<T[]> {
-        const entry = this.config.collections[collection]
-
-        if (!entry) {
-            throw new Error(`[cms] Collection "${collection}" not found in config.`)
-        }
-
-        const dir = entry.dir
-        if (!dir) {
-            throw new Error(`[cms] Collection "${collection}" is missing a dir.`)
-        }
-
-        const fullDir = path.join(
+    private getCollectionDir(dir: string): string {
+        return path.join(
             this.config.contentPath,
             this.config.collectionsDir,
             dir
         )
+    }
 
-        let files: string[]
+    private getContentPath(filePath: string): string {
+        return path.join(this.config.contentPath, filePath)
+    }
+
+    private calculateSha(content: string): string {
+        return crypto.createHash('sha256').update(content).digest('hex')
+    }
+
+    async readStatic(filePath: string): Promise<string> {
+        const fullPath = this.getStaticPath(filePath)
         try {
-            files = await fs.readdir(fullDir)
+            return await fs.readFile(fullPath, 'utf-8')
+        } catch (err: any) {
+            if (err.code === 'ENOENT') {
+                throw new Error(`[cms] Static file not found: ${fullPath}`)
+            }
+            throw new Error(`[cms] Failed to read static file: ${err.message}`)
+        }
+    }
+
+    async listCollection(dir: string): Promise<string[]> {
+        const fullDir = this.getCollectionDir(dir)
+        try {
+            const files = await fs.readdir(fullDir)
+            return files.filter((f) => f.endsWith('.json'))
         } catch (err: any) {
             if (err.code === 'ENOENT') {
                 throw new Error(`[cms] Collection directory not found: ${fullDir}`)
             }
             throw new Error(`[cms] Failed to read collection directory: ${err.message}`)
         }
+    }
 
-        const jsonFiles = files.filter((f) => f.endsWith('.json'))
+    async readFile(filePath: string): Promise<string> {
+        const fullPath = this.getContentPath(filePath)
+        try {
+            return await fs.readFile(fullPath, 'utf-8')
+        } catch (err: any) {
+            if (err.code === 'ENOENT') {
+                throw new Error(`[cms] File not found: ${fullPath}`)
+            }
+            throw new Error(`[cms] Failed to read file: ${err.message}`)
+        }
+    }
 
-        const data = await Promise.all(
-            jsonFiles.map(async (file) => {
-                const filePath = path.join(fullDir, file)
-                try {
-                    const raw = await fs.readFile(filePath, 'utf-8')
-                    return JSON.parse(raw) as T
-                } catch (err: any) {
-                    throw new Error(`[cms] Failed to read or parse ${filePath}: ${err.message}`)
+    async writeStatic(filePath: string, content: string, opts?: { expectedSha?: string }): Promise<{ sha: string }> {
+        const fullPath = this.getStaticPath(filePath)
+
+        if (opts?.expectedSha) {
+            try {
+                const existingContent = await fs.readFile(fullPath, 'utf-8')
+                const existingSha = this.calculateSha(existingContent)
+                if (existingSha !== opts.expectedSha) {
+                    throw new Error(`[cms] SHA mismatch. Expected ${opts.expectedSha}, got ${existingSha}`)
                 }
-            })
-        )
+            } catch (err: any) {
+                if (err.code !== 'ENOENT') {
+                    throw err
+                }
+            }
+        }
 
-        return data
+        await fs.mkdir(path.dirname(fullPath), { recursive: true })
+
+        await fs.writeFile(fullPath, content, 'utf-8')
+
+        return { sha: this.calculateSha(content) }
+    }
+
+    async writeFile(filePath: string, content: string, opts?: { expectedSha?: string }): Promise<{ sha: string }> {
+        const fullPath = this.getContentPath(filePath)
+
+        if (opts?.expectedSha) {
+            try {
+                const existingContent = await fs.readFile(fullPath, 'utf-8')
+                const existingSha = this.calculateSha(existingContent)
+                if (existingSha !== opts.expectedSha) {
+                    throw new Error(`[cms] SHA mismatch. Expected ${opts.expectedSha}, got ${existingSha}`)
+                }
+            } catch (err: any) {
+                if (err.code !== 'ENOENT') {
+                    throw err
+                }
+            }
+        }
+
+        await fs.mkdir(path.dirname(fullPath), { recursive: true })
+
+        await fs.writeFile(fullPath, content, 'utf-8')
+
+        return { sha: this.calculateSha(content) }
+    }
+
+    async deleteFile(filePath: string, opts?: { expectedSha?: string }): Promise<void> {
+        const fullPath = this.getContentPath(filePath)
+
+        if (opts?.expectedSha) {
+            try {
+                const existingContent = await fs.readFile(fullPath, 'utf-8')
+                const existingSha = this.calculateSha(existingContent)
+                if (existingSha !== opts.expectedSha) {
+                    throw new Error(`[cms] SHA mismatch. Expected ${opts.expectedSha}, got ${existingSha}`)
+                }
+            } catch (err: any) {
+                if (err.code === 'ENOENT') {
+                    throw new Error(`[cms] File not found: ${fullPath}`)
+                }
+                throw err
+            }
+        }
+
+        try {
+            await fs.unlink(fullPath)
+        } catch (err: any) {
+            if (err.code === 'ENOENT') {
+                throw new Error(`[cms] File not found: ${fullPath}`)
+            }
+            throw new Error(`[cms] Failed to delete file: ${err.message}`)
+        }
     }
 
 }

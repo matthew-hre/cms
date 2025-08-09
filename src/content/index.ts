@@ -26,7 +26,17 @@ export function createContentAPI<T extends CMSConfig>(config: T): ContentAPI<T> 
             key,
             {
                 get: async () => {
-                    const data = await adapter.getStatic(key)
+                    const entry = config.static[key]
+                    if (!entry) {
+                        throw new Error(`[cms] Static entry "${key}" not found in config.`)
+                    }
+                    const filename = entry.filename
+                    if (!filename) {
+                        throw new Error(`[cms] Static entry "${key}" is missing a filename.`)
+                    }
+
+                    const raw = await adapter.readStatic(filename)
+                    const data = JSON.parse(raw)
                     return schemas.static[key].parse(data)
                 }
             },
@@ -38,7 +48,23 @@ export function createContentAPI<T extends CMSConfig>(config: T): ContentAPI<T> 
             key,
             {
                 getAll: async () => {
-                    const data = await adapter.getAll(key)
+                    const entry = config.collections[key]
+                    if (!entry) {
+                        throw new Error(`[cms] Collection "${key}" not found in config.`)
+                    }
+                    const dir = entry.dir
+                    if (!dir) {
+                        throw new Error(`[cms] Collection "${key}" is missing a dir.`)
+                    }
+
+                    const files = await adapter.listCollection(dir)
+                    const data = await Promise.all(
+                        files.map(async (file) => {
+                            const filePath = `${config.collectionsDir}/${dir}/${file}`
+                            const raw = await adapter.readFile(filePath)
+                            return JSON.parse(raw)
+                        })
+                    )
                     return data.map(item => schemas.collections[key].parse(item))
                 },
                 // future: getBySlug(), create(), update(), etc.
