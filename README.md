@@ -23,7 +23,7 @@ potential to possibly grow into something larger later.
 
 - [x] `defineCMSConfig()` helper
 - [x] Validate and normalize schema with Zod
-- [x] Infer field types (`string`, `string?`, `string[]`, nested objects)
+- [x] Infer field types (`string`, `string?`, `string[]`, `number`, nested objects)
 - [x] Type-safe content API for reading
 - [x] Local file adapter for JSON content
 - [x] Package build and export setup

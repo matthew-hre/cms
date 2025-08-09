@@ -5,6 +5,8 @@ type FieldTypeMap = {
     'string': z.ZodString
     'string?': z.ZodOptional<z.ZodString>
     'string[]': z.ZodArray<z.ZodString>
+    'number': z.ZodNumber
+    'number?': z.ZodOptional<z.ZodNumber>
 }
 
 type SchemaFieldType = keyof FieldTypeMap
@@ -30,6 +32,8 @@ const fieldTypeMap = {
     'string': z.string(),
     'string?': z.string().optional(),
     'string[]': z.string().array(),
+    'number': z.number(),
+    'number?': z.number().optional(),
 } as const
 
 function convertSchemaObject(schema: Record<string, any>): z.ZodType<any> {

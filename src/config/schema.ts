@@ -4,6 +4,8 @@ export const FieldType = z.union([
     z.literal('string'),
     z.literal('string?'),
     z.literal('string[]'),
+    z.literal('number'),
+    z.literal('number?'),
 ])
 
 const FieldValue: z.ZodType<any> = z.lazy(() =>
